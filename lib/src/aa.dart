@@ -1,10 +1,18 @@
-part of 'task_pipeline.dart';
+
 
 void main() async {
-	final pipeline = TaskPipeline();
-	print(await pipeline.execInnerTask("123", 123, (data, tree) async {
-		await Future.delayed(const Duration(seconds: 2));
-		return 123;
-	}));
-	print(pipeline._taskContainerMap?.length ?? 0);
+//	final pipeline = TaskPipeline();
+	final future = Future.delayed(const Duration(seconds: 2), () {
+		throw 1;
+	});
+	future.asStream().listen((data) { print("recv1"); });
+	future.asStream().listen(
+		(data) {
+			print("recv2");
+		},
+		onError: (error, StackTrace st) {
+			print("error: $error, st: $st");
+		}
+	);
+//	print(pipeline._taskContainerMap?.length ?? 0);
 }

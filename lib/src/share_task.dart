@@ -2,15 +2,15 @@ part of 'task_pipeline.dart';
 
 
 
-Map<dynamic, Map<dynamic, BaseShareTask>> _shareTaskMap;
+Map<dynamic, Map<dynamic, ShareTask>> _shareTaskMap;
 
-BaseShareTask<T, Q> _findShareTask<T, Q>(dynamic key, T dataKey) {
+ShareTask<T, Q> _findShareTask<T, Q>(dynamic key, T dataKey) {
 	if(_shareTaskMap != null) {
 		final keyMap = _shareTaskMap[key];
 		if(keyMap != null) {
 			final shareTask = keyMap[dataKey];
 			if(shareTask != null) {
-				if(shareTask is BaseShareTask<T, Q>) {
+				if(shareTask is ShareTask<T, Q>) {
 					return shareTask;
 				}
 				else {
@@ -23,13 +23,13 @@ BaseShareTask<T, Q> _findShareTask<T, Q>(dynamic key, T dataKey) {
 	return null;
 }
 
-void _addShareTask(BaseShareTask baseShareTask) {
+void _addShareTask(ShareTask baseShareTask) {
 	_shareTaskMap ??= Map();
 	final keyMap = _shareTaskMap.putIfAbsent(baseShareTask.uniqueKey, () => Map());
 	keyMap[baseShareTask.data] = baseShareTask;
 }
 
-void _removeShareTask(BaseShareTask baseShareTask) {
+void _removeShareTask(ShareTask baseShareTask) {
 	if(_shareTaskMap != null) {
 		final keyMap = _shareTaskMap[baseShareTask.uniqueKey];
 		if(keyMap != null) {
@@ -45,7 +45,7 @@ void _removeShareTask(BaseShareTask baseShareTask) {
 	}
 }
 
-abstract class BaseShareTask<T, Q> {
+abstract class ShareTask<T, Q> {
 	dynamic get uniqueKey;
 	T get data;
 	int _refCount = 0;
@@ -78,12 +78,13 @@ abstract class BaseShareTask<T, Q> {
 	
 	void _monitor() {
 		_refCount ++;
-		print("_monitor count: $_refCount");
 	}
 	
 	void _cancelMonitor() {
+		if(_refCount == 0) {
+			return;
+		}
 		_refCount --;
-		print("_cancelMonitor count: $_refCount");
 	}
 	
 	void _completeData(Q data) {

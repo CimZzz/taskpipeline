@@ -4,11 +4,17 @@ part 'task_completer.dart';
 part 'task_exceptions.dart';
 part 'share_task.dart';
 
-/// 内部 Task 回调，需要
+/// 内部 Task 回调，需要消息数据
 typedef MessageTaskExecutor<T, Q> = Future<Q> Function(T data, TaskPipeline childPipeline);
 
-/// 内部 Task 回调，需要
+/// 内部 Task 回调，需要消息数据，但是不需要子 Pipeline
+typedef LeafMessageTaskExecutor<T, Q> = Future<Q> Function(T data);
+
+/// 内部 Task 回调，不需要消息数据
 typedef TaskExecutor<Q> = Future<Q> Function(TaskPipeline childPipeline);
+
+/// 内部 Task 回调，不需要消息数据，也不需要子 Pipeline
+typedef LeafTaskExecutor<Q> = Future<Q> Function();
 
 /// Task 存储容器
 /// 存放 [_Task] 回调容器
@@ -16,7 +22,7 @@ class _TaskContainer<T, Q> {
 	_TaskContainer({this.taskCompleter, this.childPipeline, this.shareTask});
 	final _TaskCompleter<Q> taskCompleter;
 	final TaskPipeline childPipeline;
-	final BaseShareTask<T, Q> shareTask;
+	final ShareTask<T, Q> shareTask;
 }
 
 /// Task 管线
@@ -99,48 +105,110 @@ class TaskPipeline {
 		_parentPipeline = null;
 		finishAllTask();
 	}
-	
-	/// 执行内部 Task
-	/// 如果已经存在正在执行的 Task，则直接将其返回
-	/// 但是如果父 TaskPipeline 存在该 Key，则判断为形成 Task 闭环，抛出异常
-	Future<Q> execInnerKeyTask<T, Q>(String key, T data, MessageTaskExecutor<T, Q> taskCallback) {
+
+	/// 执行内部 Task，并获取其返回值
+	/// * key: Task 的键值，设置了该值的 Task 可以通过 [TaskPipeline.finishTask] 主动终结该任务.
+	///
+	/// * data: Task 执行所需要的数据，只在使用 [msgExec] 或者 [leafMsgExec] 时才会生效.
+	///
+	/// * msgExec: Task 执行回调. 该回调使用 [data] 和生成的 `TaskPipeline` 作为回调参数，
+	/// 使用子 `TaskPipeline` 执行的 Task，都会随着该回调的终结而终结.
+	///
+	/// * leafMsgExec: Task 执行回调. 该回调只使用 [data] 作为回调参数, 不会生成子 `TaskPipeline`.
+	///
+	/// * exec: Task 执行回调. 该回调忽略 [data]，但会生成 `TaskPipeline` 作为回调参数，
+	/// 使用子 `TaskPipeline` 执行的 Task，都会随着该回调的终结而终结.
+	///
+	/// * leafExec: Task 执行回调. 该回调忽略 [data] 并且不会生成子 `TaskPipeline`.
+	///
+	/// 以上四种执行回调，在同一时间只有一种会生效，所以建议仅传递一种执行回调.
+	/// 优先级顺序为: msgExec > leafMsgExec > exec > leafExec
+	///
+	/// 如果不设置 [key] 的话，将会由内部生成一个数字作为 Task Key，该 Key 保证唯一，但外部无法
+	/// 通过 [TaskPipeline.finishTask] 方法来主动终结此 Task.
+	Future<Q> execInnerTask<T, Q>({
+		String key,
+		T data,
+		MessageTaskExecutor<T, Q> msgExec,
+		LeafMessageTaskExecutor<T, Q> leafMsgExec,
+		TaskExecutor<Q> exec,
+		LeafTaskExecutor<Q> leafExec,
+	}) {
 		if(_isDestroyed) {
 			return null;
 		}
-		return _execInnerKeyTask(key, data, taskCallback);
+		return _execInnerTask(
+			key: key != null ? key : _nextAnonymousKey(),
+			data: data,
+			msgExec: msgExec,
+			leafMsgExec: leafMsgExec,
+			exec: exec,
+			leafExec: leafExec,
+		);
 	}
-	
-	/// 执行内部 Task，忽略结果
-	void runInnerKeyTask<T, Q>(String key, T data, MessageTaskExecutor<T, Q> taskCallback) {
+
+	/// 执行内部 Task，忽略其返回值
+	/// * key: Task 的键值，设置了该值的 Task 可以通过 [TaskPipeline.finishTask] 主动终结该任务.
+	///
+	/// * data: Task 执行所需要的数据，只在使用 [msgExec] 或者 [leafMsgExec] 时才会生效.
+	///
+	/// * msgExec: Task 执行回调. 该回调使用 [data] 和生成的 `TaskPipeline` 作为回调参数，
+	/// 使用子 `TaskPipeline` 执行的 Task，都会随着该回调的终结而终结.
+	///
+	/// * leafMsgExec: Task 执行回调. 该回调只使用 [data] 作为回调参数, 不会生成子 `TaskPipeline`.
+	///
+	/// * exec: Task 执行回调. 该回调忽略 [data]，但会生成 `TaskPipeline` 作为回调参数，
+	/// 使用子 `TaskPipeline` 执行的 Task，都会随着该回调的终结而终结.
+	///
+	/// * leafExec: Task 执行回调. 该回调忽略 [data] 并且不会生成子 `TaskPipeline`.
+	///
+	/// 以上四种执行回调，在同一时间只有一种会生效，所以建议仅传递一种执行回调.
+	/// 优先级顺序为: msgExec > leafMsgExec > exec > leafExec
+	///
+	/// 如果不设置 [key] 的话，将会由内部生成一个数字作为 Task Key，该 Key 保证唯一，但外部无法
+	/// 通过 [TaskPipeline.finishTask] 方法来主动终结此 Task.
+	void runInnerTask<T, Q>({
+		String key,
+		T data,
+		MessageTaskExecutor<T, Q> msgExec,
+		LeafMessageTaskExecutor<T, Q> leafMsgExec,
+		TaskExecutor<Q> exec,
+		LeafTaskExecutor<Q> leafExec,
+	}) {
 		if(_isDestroyed) {
 			return;
 		}
-		_execInnerKeyTask(key, data, taskCallback);
+		_execInnerTask(
+			key: key != null ? key : _nextAnonymousKey(),
+			data: data,
+			msgExec: msgExec,
+			leafMsgExec: leafMsgExec,
+			exec: exec,
+			leafExec: leafExec,
+		);
 	}
-	
-	/// 执行匿名内部 Task
-	/// 该 Task 无法通过外部主动结束
-	/// 将会有内部生成一个数字作为 Task Key，该 Key 保证唯一
-	Future<Q> execInnerTask<T, Q>(T data, MessageTaskExecutor<T, Q> taskCallback) {
-		if(_isDestroyed) {
-			return null;
-		}
-		return _execInnerKeyTask(_nextAnonymousKey(), data, taskCallback);
-	}
-	
-	/// 执行匿名内部 Task，忽略结果
-	void runInnerTask<T, Q>(T data, MessageTaskExecutor<T, Q> taskCallback) {
-		if(_isDestroyed) {
-			return;
-		}
-		_execInnerKeyTask(_nextAnonymousKey(), data, taskCallback);
-	}
-	
+
 	/// 执行内部 Task 逻辑
-	Future<Q> _execInnerKeyTask<T, Q>(dynamic key, T data, MessageTaskExecutor<T, Q> taskCallback) {
+	Future<Q> _execInnerTask<T, Q>({
+		dynamic key,
+		T data,
+		MessageTaskExecutor<T, Q> msgExec,
+		LeafMessageTaskExecutor<T, Q> leafMsgExec,
+		TaskExecutor<Q> exec,
+		LeafTaskExecutor<Q> leafExec,
+	}) {
 		if(_isDestroyed) {
 			return null;
 		}
+
+		// 不存在回调的话直接返回
+		if(msgExec == null &&
+			leafMsgExec == null &&
+			exec == null &&
+			leafExec == null) {
+			return null;
+		}
+
 		_taskContainerMap ??= Map();
 		Future<Q> requireFuture;
 		_TaskContainer taskContainer;
@@ -168,55 +236,83 @@ class TaskPipeline {
 		}
 		
 		if(taskContainer == null) {
-			taskContainer = _establishKeyTask<T, Q>(key);
-			requireFuture = taskContainer.taskCompleter.complete(
-				taskCallback(data, taskContainer.childPipeline));
+			Future<Q> taskFuture;
+			if(msgExec != null) {
+				taskContainer = _establishKeyTask<T, Q>(key);
+				taskFuture = msgExec(data, taskContainer.childPipeline);
+			}
+			else if(leafMsgExec != null) {
+				taskContainer = _establishKeyTask<T, Q>(key, hasChildPipeline: false);
+				taskFuture = leafMsgExec(data);
+			}
+			else if(exec != null) {
+				taskContainer = _establishKeyTask<T, Q>(key);
+				taskFuture = exec(taskContainer.childPipeline);
+			}
+			else if(leafExec != null) {
+				taskContainer = _establishKeyTask<T, Q>(key, hasChildPipeline: false);
+				taskFuture = leafExec();
+			}
+
+			requireFuture = taskContainer.taskCompleter.complete(taskFuture);
 		}
 		
 		return requireFuture;
 	}
-	
-	/// 执行共享 Task
-	/// 如果已经存在正在执行的 Task，则直接将其返回
-	/// 如果全局存在正在执行的 Task，那么会将其加入监控
-	Future<Q> execShareKeyTask<T, Q>(String key, BaseShareTask<T, Q> shareTask) {
+
+
+	/// 执行共享 Task，并获取其返回值
+	/// * key: Task 的键值，设置了该值的 Task 可以通过 [TaskPipeline.finishTask] 主动终结该任务.
+	///
+	/// * shareTask: 共享 Task.
+	/// 
+	/// 如果不设置 [key] 的话，将会由内部生成一个数字作为 Task Key，该 Key 保证唯一，但外部无法
+	/// 通过 [TaskPipeline.finishTask] 方法来主动终结此 Task.
+	Future<Q> execShareTask<T, Q>({
+		String key,
+		ShareTask<T, Q> shareTask
+	}) {
 		if(_isDestroyed) {
 			return null;
 		}
-		return _execShareKeyTask(key, shareTask);
+		return _execShareTask(
+			key: key != null ? key : _nextAnonymousKey(),
+			shareTask: shareTask
+		);
 	}
-	
-	/// 执行共享 Task，忽略结果
-	void runShareKeyTask<T, Q>(String key, BaseShareTask<T, Q> shareTask) {
+
+	/// 执行共享 Task，忽略其返回值
+	/// * key: Task 的键值，设置了该值的 Task 可以通过 [TaskPipeline.finishTask] 主动终结该任务.
+	///
+	/// * shareTask: 共享 Task.
+	///
+	/// 如果不设置 [key] 的话，将会由内部生成一个数字作为 Task Key，该 Key 保证唯一，但外部无法
+	/// 通过 [TaskPipeline.finishTask] 方法来主动终结此 Task.
+	void runShareTask<T, Q>({
+		String key,
+		ShareTask<T, Q> shareTask
+	}) {
 		if(_isDestroyed) {
-			return null;
+			return;
 		}
-		
-		_execShareKeyTask(key, shareTask);
+
+		_execShareTask(
+			key: key != null ? key : _nextAnonymousKey(),
+			shareTask: shareTask
+		);
 	}
-	
-	/// 执行匿名共享 Task
-	/// 该 Task 无法通过外部主动结束
-	/// 将会有内部生成一个数字作为 Task Key，该 Key 保证唯一
-	Future<Q> execShareTask<T, Q>(BaseShareTask<T, Q> shareTask) {
-		if(_isDestroyed) {
-			return null;
-		}
-		return _execShareKeyTask(_nextAnonymousKey(), shareTask);
-	}
-	
-	/// 执行匿名共享 Task，忽略结果
-	void runShareTask<T, Q>(BaseShareTask<T, Q> shareTask) {
-		if(_isDestroyed) {
-			return null;
-		}
-		
-		_execShareKeyTask(_nextAnonymousKey(), shareTask);
-	}
+
 	
 	/// 执行共享 Task 逻辑
-	Future<Q> _execShareKeyTask<T, Q>(dynamic key, BaseShareTask<T, Q> shareTask) {
+	Future<Q> _execShareTask<T, Q>({
+		dynamic key,
+		ShareTask<T, Q> shareTask
+	}) {
 		if(_isDestroyed) {
+			return null;
+		}
+
+		if(shareTask == null) {
 			return null;
 		}
 		
@@ -234,7 +330,7 @@ class TaskPipeline {
 				final taskCompleter = taskContainer.taskCompleter;
 				if(taskContainer.taskCompleter != null &&
 					taskCompleter is _TaskCompleter<Q> &&
-					shareTask is BaseShareTask<T, Q> &&
+					shareTask is ShareTask<T, Q> &&
 					shareTask.data == shareTask.data
 				) {
 					requireFuture = taskCompleter.future();
@@ -285,7 +381,7 @@ class TaskPipeline {
 	
 	/// 建立 Key Task
 	/// 可以主动被终结
-	_TaskContainer<T, Q> _establishKeyTask<T, Q>(dynamic key, {bool hasChildPipeline = true, BaseShareTask<T, Q> baseShareTask}) {
+	_TaskContainer<T, Q> _establishKeyTask<T, Q>(dynamic key, {bool hasChildPipeline = true, ShareTask<T, Q> baseShareTask}) {
 		_TaskCompleter<Q> completer = _TaskCompleter(() {
 			_finishTask(key);
 		});

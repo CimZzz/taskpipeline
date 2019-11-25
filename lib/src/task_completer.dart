@@ -37,6 +37,7 @@ class _TaskCompleter<Q> {
 	void stop({bool needDoneCallback = false}) {
 		if(!needDoneCallback) {
 			taskDoneCallback();
+			taskDoneCallback = null;
 		}
 		_completeData(null);
 	}

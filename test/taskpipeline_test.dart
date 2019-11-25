@@ -3,14 +3,14 @@ import 'package:test/test.dart';
 
 void main() {
   group('A group of tests', () {
-    Awesome awesome;
+    TaskPipeline taskPipeline;
 
     setUp(() {
-      awesome = Awesome();
+      taskPipeline = TaskPipeline();
     });
 
     test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
+//      expect(taskPipeline., isTrue);
     });
   });
 }

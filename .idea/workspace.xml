@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="935f1fdc-cf41-4a3c-8a34-f5de08923959" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/example/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example1.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example2.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example3.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example4.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example5.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example6.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example/example7.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CHANGELOG.md" beforeDir="false" afterPath="$PROJECT_DIR$/CHANGELOG.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/example/taskpipeline_example.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/aa.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/share_task.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/share_task.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/task_completer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/task_completer.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/task_exceptions.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/task_exceptions.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/task_pipeline.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/task_pipeline.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/taskpipeline.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/taskpipeline.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/taskpipeline_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/taskpipeline_test.dart" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Dart File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IgnoredFileRootStore">
+    <option name="generatedRoots">
+      <set>
+        <option value="$PROJECT_DIR$/.idea" />
+      </set>
+    </option>
+  </component>
+  <component name="ProjectId" id="1TvJwMXP28PBrPBGwTNmmTzJMMf" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="dart.analysis.tool.window.force.activate" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/src" />
+    <property name="settings.editor.selected.configurable" value="http.proxy" />
+    <property name="show.migrate.to.gradle.popup" value="false" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib/src" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib/src" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Dart Command Line App.example7.dart">
+    <configuration name="example3.dart" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application" temporary="true" nameIsGenerated="true">
+      <option name="filePath" value="$PROJECT_DIR$/example/example3.dart" />
+      <option name="workingDirectory" value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="example4.dart" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application" temporary="true" nameIsGenerated="true">
+      <option name="filePath" value="$PROJECT_DIR$/example/example4.dart" />
+      <option name="workingDirectory" value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="example5.dart" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application" temporary="true" nameIsGenerated="true">
+      <option name="filePath" value="$PROJECT_DIR$/example/example5.dart" />
+      <option name="workingDirectory" value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="example6.dart" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application" temporary="true" nameIsGenerated="true">
+      <option name="filePath" value="$PROJECT_DIR$/example/example6.dart" />
+      <option name="workingDirectory" value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="example7.dart" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application" temporary="true" nameIsGenerated="true">
+      <option name="filePath" value="$PROJECT_DIR$/example/example7.dart" />
+      <option name="workingDirectory" value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Dart Command Line App.example7.dart" />
+        <item itemvalue="Dart Command Line App.example6.dart" />
+        <item itemvalue="Dart Command Line App.example5.dart" />
+        <item itemvalue="Dart Command Line App.example4.dart" />
+        <item itemvalue="Dart Command Line App.example3.dart" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="935f1fdc-cf41-4a3c-8a34-f5de08923959" name="Default Changelist" comment="" />
+      <created>1574334872354</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1574334872354</updated>
+      <workItem from="1574334876757" duration="856000" />
+      <workItem from="1574389991962" duration="15336000" />
+      <workItem from="1574649389777" duration="37000" />
+      <workItem from="1574649449481" duration="16329000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="Dart">
+          <url>file://$PROJECT_DIR$/lib/src/task_pipeline.dart</url>
+          <line>199</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

@@ -5,16 +5,16 @@ part 'task_exceptions.dart';
 part 'share_task.dart';
 
 /// 内部 Task 回调，需要消息数据
-typedef MessageTaskExecutor<T, Q> = Future<Q> Function(T data, TaskPipeline childPipeline);
+typedef MessageTaskExecutor<T, Q> = FutureOr<Q> Function(T data, TaskPipeline childPipeline);
 
 /// 内部 Task 回调，需要消息数据，但是不需要子 Pipeline
-typedef LeafMessageTaskExecutor<T, Q> = Future<Q> Function(T data);
+typedef LeafMessageTaskExecutor<T, Q> = FutureOr<Q> Function(T data);
 
 /// 内部 Task 回调，不需要消息数据
-typedef TaskExecutor<Q> = Future<Q> Function(TaskPipeline childPipeline);
+typedef TaskExecutor<Q> = FutureOr<Q> Function(TaskPipeline childPipeline);
 
 /// 内部 Task 回调，不需要消息数据，也不需要子 Pipeline
-typedef LeafTaskExecutor<Q> = Future<Q> Function();
+typedef LeafTaskExecutor<Q> = FutureOr<Q> Function();
 
 /// Task 存储容器
 /// 存放 [_Task] 回调容器
@@ -236,25 +236,37 @@ class TaskPipeline {
 		}
 		
 		if(taskContainer == null) {
-			Future<Q> taskFuture;
-			if(msgExec != null) {
-				taskContainer = _establishKeyTask<T, Q>(key);
-				taskFuture = msgExec(data, taskContainer.childPipeline);
+			FutureOr<Q> taskFuture;
+			try {
+				if (msgExec != null) {
+					taskContainer = _establishKeyTask<T, Q>(key);
+					taskFuture = msgExec(data, taskContainer.childPipeline);
+				}
+				else if (leafMsgExec != null) {
+					taskContainer =
+						_establishKeyTask<T, Q>(key, hasChildPipeline: false);
+					taskFuture = leafMsgExec(data);
+				}
+				else if (exec != null) {
+					taskContainer = _establishKeyTask<T, Q>(key);
+					taskFuture = exec(taskContainer.childPipeline);
+				}
+				else if (leafExec != null) {
+					taskContainer =
+						_establishKeyTask<T, Q>(key, hasChildPipeline: false);
+					taskFuture = leafExec();
+				}
+				
+				if(taskFuture is Future<Q>) {
+					requireFuture = taskContainer.taskCompleter.completeFuture(taskFuture);
+				}
+				else {
+					requireFuture = taskContainer.taskCompleter.completeData(taskFuture);
+				}
 			}
-			else if(leafMsgExec != null) {
-				taskContainer = _establishKeyTask<T, Q>(key, hasChildPipeline: false);
-				taskFuture = leafMsgExec(data);
+			catch(e, stacktrace) {
+				requireFuture = taskContainer.taskCompleter.completeError(e, stacktrace);
 			}
-			else if(exec != null) {
-				taskContainer = _establishKeyTask<T, Q>(key);
-				taskFuture = exec(taskContainer.childPipeline);
-			}
-			else if(leafExec != null) {
-				taskContainer = _establishKeyTask<T, Q>(key, hasChildPipeline: false);
-				taskFuture = leafExec();
-			}
-
-			requireFuture = taskContainer.taskCompleter.complete(taskFuture);
 		}
 		
 		return requireFuture;
@@ -355,7 +367,7 @@ class TaskPipeline {
 			
 			// 因为 Share Task 不会引起循环嵌套问题
 			taskContainer = _establishKeyTask<T, Q>(key, hasChildPipeline: false, baseShareTask: requireTask);
-			requireFuture = taskContainer.taskCompleter.complete(requireTask._execute());
+			requireFuture = taskContainer.taskCompleter.completeFuture(requireTask._execute());
 		}
 		
 		return requireFuture;

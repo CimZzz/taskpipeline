@@ -9,17 +9,35 @@ class _TaskCompleter<Q> {
 	StreamSubscription<Q> _taskSubscription;
 	Completer<Q> _completer;
 	
-	Future<Q> complete(Future<Q> monitorFuture) {
+	Future<Q> completeData(Q data) {
 		if(_completer != null) {
 			return _completer.future;
 		}
 		
-		_completer = Completer<Q>();
-		_completer.future.whenComplete(() {
-			_doTaskDoneCallback();
-		});
+		_initCompleter();
+		_completeData(data);
+		return _completer.future;
+	}
+	
+	Future<Q> completeError(dynamic error, StackTrace stacktrace) {
+		if(_completer != null) {
+			return _completer.future;
+		}
+		
+		_initCompleter();
+		_completeError(error, stacktrace);
+		return _completer.future;
+	}
+	
+	Future<Q> completeFuture(Future<Q> monitorFuture) {
+		if(_completer != null) {
+			return _completer.future;
+		}
+		
+		_initCompleter();
+		
 		_taskSubscription = monitorFuture.asStream().listen(
-			(data) {
+				(data) {
 				_completeData(data);
 			},
 			onError: (error, [StackTrace stack]) {
@@ -40,6 +58,13 @@ class _TaskCompleter<Q> {
 			taskDoneCallback = null;
 		}
 		_completeData(null);
+	}
+	
+	void _initCompleter() {
+		_completer = Completer<Q>();
+		_completer.future.whenComplete(() {
+			_doTaskDoneCallback();
+		});
 	}
 	
 	void _completeData(Q data) {

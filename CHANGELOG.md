@@ -25,3 +25,7 @@ LeafTaskExecutor<Q> leafExec;
 
 - `TaskPipeline` 可以执行共享 Task
 - `TaskPipeline` 可以终结 Task
+
+## 0.0.2
+
+- 执行内部 Task 时可以执行同步方法

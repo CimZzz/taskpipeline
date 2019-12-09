@@ -1,6 +1,6 @@
 import 'dart:async';
 
-part 'task_completer.dart';
+import 'proxy_completer.dart';
 part 'task_exceptions.dart';
 part 'share_task.dart';
 
@@ -19,8 +19,8 @@ typedef LeafTaskExecutor<Q> = FutureOr<Q> Function();
 /// Task 存储容器
 /// 存放 [_Task] 回调容器
 class _TaskContainer<T, Q> {
-	_TaskContainer({this.taskCompleter, this.childPipeline, this.shareTask});
-	final _TaskCompleter<Q> taskCompleter;
+	_TaskContainer({this.proxyCompleter, this.childPipeline, this.shareTask});
+	final ProxyCompleter<Q> proxyCompleter;
 	final TaskPipeline childPipeline;
 	final ShareTask<T, Q> shareTask;
 }
@@ -29,7 +29,7 @@ class _TaskContainer<T, Q> {
 /// 用来控制所有 Task 的执行与终结
 class TaskPipeline {
 	/// 通用构造方法
-	TaskPipeline(): this._parentPipeline = null;
+	TaskPipeline(): _parentPipeline = null;
 	
 	/// 生成子 Pipeline 方法
 	TaskPipeline._spawn(this._parentPipeline);
@@ -94,7 +94,7 @@ class TaskPipeline {
 			return;
 		}
 		
-		taskContainer.taskCompleter.stop();
+		taskContainer.proxyCompleter.stop();
 		taskContainer.shareTask?._cancelMonitor();
 		taskContainer.childPipeline?.destroy();
 	}
@@ -209,28 +209,28 @@ class TaskPipeline {
 			return null;
 		}
 
-		_taskContainerMap ??= Map();
+		_taskContainerMap ??= {};
 		Future<Q> requireFuture;
 		_TaskContainer taskContainer;
 		if(key is String) {
 			taskContainer = _taskContainerMap[key];
 			if(taskContainer != null) {
 				if(taskContainer.shareTask != null) {
-					throw TaskException(message: "Already exist share task. key : $key");
+					throw TaskException(message: 'Already exist share task. key : $key');
 				}
-				final taskCompleter = taskContainer.taskCompleter;
-				if(taskCompleter != null && taskCompleter is _TaskCompleter<Q>) {
+				final taskCompleter = taskContainer.proxyCompleter;
+				if(taskCompleter != null && taskCompleter is ProxyCompleter<Q>) {
 					requireFuture = taskCompleter.future();
 				}
 				else {
-					throw TaskException(message: "Equal key, but not equal inner task. key : $key");
+					throw TaskException(message: 'Equal key, but not equal inner task. key : $key');
 				}
 			}
 			else {
 				// 检查父 TaskPipeline 是否存在相同 Key 值的 Task
 				// 存在则抛出异常
 				if(_checkParentExist(key)) {
-					throw TaskException(message: "Ancestor task pipeline exists same key. key : $key");
+					throw TaskException(message: 'Ancestor task pipeline exists same key. key : $key');
 				}
 			}
 		}
@@ -258,14 +258,14 @@ class TaskPipeline {
 				}
 				
 				if(taskFuture is Future<Q>) {
-					requireFuture = taskContainer.taskCompleter.completeFuture(taskFuture);
+					requireFuture = taskContainer.proxyCompleter.completeFuture(taskFuture);
 				}
 				else {
-					requireFuture = taskContainer.taskCompleter.completeData(taskFuture);
+					requireFuture = taskContainer.proxyCompleter.completeData(taskFuture);
 				}
 			}
 			catch(e, stacktrace) {
-				requireFuture = taskContainer.taskCompleter.completeError(e, stacktrace);
+				requireFuture = taskContainer.proxyCompleter.completeError(e, stacktrace);
 			}
 		}
 		
@@ -328,27 +328,27 @@ class TaskPipeline {
 			return null;
 		}
 		
-		_taskContainerMap ??= Map();
+		_taskContainerMap ??= {};
 		Future<Q> requireFuture;
 		_TaskContainer taskContainer;
 		if(key is String) {
 			taskContainer = _taskContainerMap[key];
 			if(taskContainer != null) {
 				if(taskContainer.shareTask == null) {
-					throw TaskException(message: "Already exist inner task. key : $key");
+					throw TaskException(message: 'Already exist inner task. key : $key');
 				}
 				
 				final shareTask = taskContainer.shareTask;
-				final taskCompleter = taskContainer.taskCompleter;
-				if(taskContainer.taskCompleter != null &&
-					taskCompleter is _TaskCompleter<Q> &&
+				final taskCompleter = taskContainer.proxyCompleter;
+				if(taskContainer.proxyCompleter != null &&
+					taskCompleter is ProxyCompleter<Q> &&
 					shareTask is ShareTask<T, Q> &&
 					shareTask.data == shareTask.data
 				) {
 					requireFuture = taskCompleter.future();
 				}
 				else {
-					throw TaskException(message: "Equal key, but not equal share task. key : $key");
+					throw TaskException(message: 'Equal key, but not equal share task. key : $key');
 				}
 			}
 			else {
@@ -367,7 +367,7 @@ class TaskPipeline {
 			
 			// 因为 Share Task 不会引起循环嵌套问题
 			taskContainer = _establishKeyTask<T, Q>(key, hasChildPipeline: false, baseShareTask: requireTask);
-			requireFuture = taskContainer.taskCompleter.completeFuture(requireTask._execute());
+			requireFuture = taskContainer.proxyCompleter.completeFuture(requireTask._execute());
 		}
 		
 		return requireFuture;
@@ -377,7 +377,7 @@ class TaskPipeline {
 	/// 检查祖先 TaskPipeline 是否存在同样 Key 值的内部 Task.
 	/// 通常来说，内部 Task 在一个 Task 树中， Key 是唯一的，最大限度防止闭环的形成
 	bool _checkParentExist(String key) {
-		var parent = this._parentPipeline;
+		var parent = _parentPipeline;
 		while(parent != null) {
 			if(parent._taskContainerMap != null) {
 				final taskContainer = parent._taskContainerMap[key];
@@ -394,12 +394,12 @@ class TaskPipeline {
 	/// 建立 Key Task
 	/// 可以主动被终结
 	_TaskContainer<T, Q> _establishKeyTask<T, Q>(dynamic key, {bool hasChildPipeline = true, ShareTask<T, Q> baseShareTask}) {
-		_TaskCompleter<Q> completer = _TaskCompleter(() {
+		var completer = ProxyCompleter<Q>(() {
 			_finishTask(key);
 		});
 		baseShareTask?._monitor();
 		final taskContainer = _TaskContainer(
-			taskCompleter: completer,
+			proxyCompleter: completer,
 			childPipeline: hasChildPipeline ? TaskPipeline._spawn(this) : null,
 			shareTask: baseShareTask,
 		);

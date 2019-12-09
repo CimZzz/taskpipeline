@@ -29,3 +29,8 @@ LeafTaskExecutor<Q> leafExec;
 ## 0.0.2
 
 - 执行内部 Task 时可以执行同步方法
+
+## 0.0.3
+
+- 调整代码风格
+- 将 `_TaskCompleter` 改造成 `ProxyCompleter`，可以单独作为一个工具来使用

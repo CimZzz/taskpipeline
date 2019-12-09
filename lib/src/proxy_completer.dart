@@ -1,11 +1,11 @@
-part of 'task_pipeline.dart';
+import 'dart:async';
 
-typedef TaskDoneCallback = void Function();
+typedef ProxyDoneCallback = void Function();
 
-class _TaskCompleter<Q> {
-	_TaskCompleter(this.taskDoneCallback);
+class ProxyCompleter<Q> {
+	ProxyCompleter(this.taskDoneCallback);
 	
-	TaskDoneCallback taskDoneCallback;
+	ProxyDoneCallback taskDoneCallback;
 	StreamSubscription<Q> _taskSubscription;
 	Completer<Q> _completer;
 	

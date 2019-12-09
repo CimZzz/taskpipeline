@@ -4,3 +4,4 @@
 library taskpipeline;
 
 export 'src/task_pipeline.dart';
+export 'src/proxy_completer.dart';

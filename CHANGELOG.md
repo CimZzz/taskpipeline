@@ -34,3 +34,7 @@ LeafTaskExecutor<Q> leafExec;
 
 - 调整代码风格
 - 将 `_TaskCompleter` 改造成 `ProxyCompleter`，可以单独作为一个工具来使用
+
+## 0.0.4
+
+- `TaskPipeline` 现在可以 `fork` 子 `TaskPipeline` 进行独立操作，生命周期跟随主 `TaskPipeline`.

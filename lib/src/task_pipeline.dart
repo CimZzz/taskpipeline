@@ -29,13 +29,22 @@ class _TaskContainer<T, Q> {
 /// 用来控制所有 Task 的执行与终结
 class TaskPipeline {
 	/// 通用构造方法
-	TaskPipeline(): _parentPipeline = null;
+	TaskPipeline();
 	
 	/// 生成子 Pipeline 方法
-	TaskPipeline._spawn(this._parentPipeline);
+	TaskPipeline._spawn(this._ancestor);
+	
+	/// 生成子 Pipeline 方法
+	TaskPipeline._fork(this._forkKey, this._master);
 	
 	/// 祖先 TaskPipeline
-	TaskPipeline _parentPipeline;
+	TaskPipeline _ancestor;
+	
+	/// 主 TaskPipeline
+	TaskPipeline _master;
+
+  /// Fork 时使用的 Key
+  dynamic _forkKey;
 	
 	/// 判断当前 TaskPipeline 是否已经被销毁
 	bool _isDestroyed = false;
@@ -43,7 +52,40 @@ class TaskPipeline {
 	/// TaskContainer 映射表
 	/// 存放全部正在执行的 Task 和管理其全部子 Task 的 Pipeline
 	Map<dynamic, _TaskContainer> _taskContainerMap;
+
+  /// 存放 Fork 的 TaskPipeline 映射表
+  /// 主 TaskPipeline 可以 Fork 子 TaskPipeline,
+  /// 当主 TaskPipeline 被销毁时，子 TaskPipeline 也会被销毁
+  /// 这个子 TaskPipeline 与任务中创建的 TaskPipeline 不同的是，
+  /// 该 TaskPipeline 不会持有主 TaskPipeline 的引用，而是作为一个独立
+  /// 的存在
+  Map<dynamic, TaskPipeline> _forkPipeline;
 	
+  /// Fork 一个子 Pipeline，进行独立使用
+  /// 在调用 destroy 时会自动和主 Pipeline 脱钩
+  TaskPipeline fork({dynamic key}) {
+    if(key == null || _forkPipeline?.containsKey(key) == true) {
+      // key 不存在或者指定 key 下存在对应子 TaskPipeline，返回 null
+      return null;
+    }
+    final taskPipeline = TaskPipeline._fork(key, this);
+    _forkPipeline ??= {};
+    _forkPipeline[key] = taskPipeline;
+    return taskPipeline;
+  }
+
+  /// 取消 Fork 引用
+  void _forkCancel({dynamic key}) {
+    if(key == null || !(_forkPipeline?.containsKey(key) ?? false)) {
+      // key 不存在或者指定 key 下不存在对应的子 TaskPipeline，返回
+      return;
+    }
+    _forkPipeline.remove(key);
+    if(_forkPipeline.length == 0) {
+      _forkPipeline = null;
+    }
+  }
+
 	/// 匿名 Task 数字 Key
 	/// 每次创建 Task 都会自增 1，保证 Key 唯一
 	int _anonymousKey = 0;
@@ -74,19 +116,6 @@ class TaskPipeline {
 		_stopTask(_taskContainerMap.remove(key));
 	}
 	
-	/// 终结全部 Task
-	/// 同时也会销毁全部子 TaskPipeline.
-	void finishAllTask() {
-		if(_taskContainerMap != null) {
-			final tempTaskMap = _taskContainerMap;
-			_taskContainerMap = null;
-			tempTaskMap.values.forEach((taskContainer) {
-				_stopTask(taskContainer);
-			});
-		}
-		
-		_anonymousKey = 0;
-	}
 	
 	/// 终结 Task 的逻辑实现
 	void _stopTask(_TaskContainer taskContainer) {
@@ -98,12 +127,39 @@ class TaskPipeline {
 		taskContainer.shareTask?._cancelMonitor();
 		taskContainer.childPipeline?.destroy();
 	}
+
+	/// 终结全部 Task
+	/// 同时也会销毁全部子 TaskPipeline.
+	void finishAllTask() {
+		if(_taskContainerMap != null) {
+			final tempTaskMap = _taskContainerMap;
+			_taskContainerMap = null;
+			tempTaskMap.values.forEach((taskContainer) {
+				_stopTask(taskContainer);
+			});
+		}
+
+		
+		_anonymousKey = 0;
+	}
 	
 	/// 销毁 Task
 	void destroy() {
 		_isDestroyed = true;
-		_parentPipeline = null;
+		_ancestor = null;
 		finishAllTask();
+    if(_master != null) {
+      _master._forkCancel(key: _forkKey);
+      _master = null;
+    }
+
+    if(_forkPipeline != null) {
+      final tempPipeline = _forkPipeline;
+      _forkPipeline = null;
+      tempPipeline.values.forEach((pipeline) {
+        pipeline.destroy();
+      });
+    }
 	}
 
 	/// 执行内部 Task，并获取其返回值
@@ -377,7 +433,7 @@ class TaskPipeline {
 	/// 检查祖先 TaskPipeline 是否存在同样 Key 值的内部 Task.
 	/// 通常来说，内部 Task 在一个 Task 树中， Key 是唯一的，最大限度防止闭环的形成
 	bool _checkParentExist(String key) {
-		var parent = _parentPipeline;
+		var parent = _ancestor;
 		while(parent != null) {
 			if(parent._taskContainerMap != null) {
 				final taskContainer = parent._taskContainerMap[key];
@@ -386,7 +442,7 @@ class TaskPipeline {
 					return true;
 				}
 			}
-			parent = parent._parentPipeline;
+			parent = parent._ancestor;
 		}
 		return false;
 	}

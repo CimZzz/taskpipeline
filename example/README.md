@@ -27,3 +27,7 @@
 ### 示例 7: 终结共享 Task
 
 [示例链接](example7.dart)
+
+### 示例 8: Fork Pipeline
+
+[示例链接](example8.dart)

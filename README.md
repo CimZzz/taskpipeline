@@ -6,12 +6,12 @@
 
 ## 开始使用
 
-当前最新版本为: 0.0.3
+当前最新版本为: 0.0.5
 
 在 "pubspec.yaml" 文件中加入
 ```yaml
 dependencies:
-  taskpipeline: ^0.0.3
+  taskpipeline: ^0.0.5
 ```
 
 github

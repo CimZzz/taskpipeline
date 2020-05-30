@@ -38,3 +38,7 @@ LeafTaskExecutor<Q> leafExec;
 ## 0.0.4
 
 - `TaskPipeline` 现在可以 `fork` 子 `TaskPipeline` 进行独立操作，生命周期跟随主 `TaskPipeline`.
+
+## 0.0.5
+
+- 修复在 `Flutter web` 编译器编译后发生的逻辑错误

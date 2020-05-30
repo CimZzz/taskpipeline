@@ -1,6 +1,6 @@
 name: taskpipeline
 description: Control future start or stop (not really, but return null immediately), that is really useful for development in fact.
-version: 0.0.4
+version: 0.0.5
 homepage: https://github.com/CimZzz/taskpipeline
 
 environment:

@@ -312,6 +312,10 @@ class TaskPipeline {
 						_establishKeyTask<T, Q>(key, hasChildPipeline: false);
 					taskFuture = leafExec();
 				}
+				// 修复在 Flutter web 时编译后代码逻辑问题
+				else {
+					return null;
+				}
 				
 				if(taskFuture is Future<Q>) {
 					requireFuture = taskContainer.proxyCompleter.completeFuture(taskFuture);
